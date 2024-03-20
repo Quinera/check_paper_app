@@ -1,0 +1,6 @@
+/* static/style.css */
+body {
+    background-image: url('../../static/images/back.jpeg');
+    background-size: cover; /* 背景画像をカバーとして設定 */
+    background-position: center; /* 中央に配置 */
+}

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <title>論文チェックサイトダウンロードページ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> <!-- CSSファイルをリンク -->
+    <h3>論文チェックサイト</h3>
+</head>
+<body>
+    <h1>チェックが完了しました</h1>
+    <p><a href="{{ download_url }}">結果をダウンロード</a></p>
+    <h1>チェック結果</h1>
+    <ul>
+        {% for result in results %}
+            <li>{{ result }}</li>
+        {% endfor %}
+    </ul>
+    <!-- アップロードページへのリンクを追加 -->
+    <p><a href="/">もう一度アップロードする</a></p>
+</body>
+</html>
