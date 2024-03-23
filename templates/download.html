@@ -12,7 +12,7 @@
 </head>
 <body>
     <h1>チェックが完了しました</h1>
-    <p><a href="{{ download_url }}">結果をテキストファイルでダウンロード</a></p>
+    <p><a id="download-link" href="{{ download_url }}">結果をテキストファイルでダウンロード</a></p>
     <p><a href="/">もう一度アップロードする</a></p>
     <h1>チェック結果</h1>
     <ul>
@@ -33,5 +33,28 @@
     </ul>
     <!-- アップロードページへのリンクを追加 -->
     <p><a href="/">もう一度アップロードする</a></p>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初期状態では、ページ離脱時にsendBeaconを実行する
+            window.shouldSendBeacon = true;
+
+            // ダウンロードリンクのIDが'download-link'であると仮定
+            document.getElementById('download-link').addEventListener('click', function() {
+                // ダウンロードリンクをクリックした場合、一時的にsendBeaconを無効にする
+                window.shouldSendBeacon = false;
+
+                // shouldSendBeaconを再度有効にする
+                setTimeout(function() {
+                    window.shouldSendBeacon = true;
+                }, 500);
+            });
+        });
+
+        window.onbeforeunload = function(event) {
+            if (window.shouldSendBeacon) {
+                navigator.sendBeacon("{{ cleanup_url }}");
+            }
+        };
+        </script>
 </body>
 </html>

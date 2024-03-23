@@ -41,25 +41,35 @@ def upload_file():
             return 'ファイルが選択されていません', 400
         if file:
             # アップロードされたファイルを一時ファイルとして保存
-            input_file_path = 'input.txt'
+            input_file_path = os.path.join('tmp', f'input_{file.filename}')
             file.save(input_file_path)
             # 出力ファイルの名前を設定
             output_file_name = f"result_{file.filename}"
-            output_file_path = os.path.join('output', output_file_name)
+            output_file_path = os.path.join('tmp', output_file_name)
             results = []
             # ファイルを処理
             process_file(input_file_path, output_file_path,results)
             # 処理後のファイルのダウンロードリンクを提供するページを表示
             download_url = url_for('download_file', filename=output_file_name)
-            return render_template('download.html', download_url=download_url, results=results)
+            cleanup_url = url_for('cleanup', filename=file.filename)
+            return render_template('download.html', download_url=download_url, cleanup_url=cleanup_url, results=results)
 
     # GETリクエストの場合、ファイルアップロードフォームを表示（変更点）
     return render_template('index.html')
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    path = os.path.join('output', filename)
+    path = os.path.join('tmp', filename)
     return send_file(path, as_attachment=True)
+
+@app.route('/cleanup/<filename>', methods=['POST'])
+def cleanup(filename):
+    try:
+        os.remove(os.path.join('tmp', f"result_{filename}"))
+        os.remove(os.path.join('tmp', f"input_{filename}"))
+        return 'File deleted successfully', 200
+    except Exception as e:
+        return str(e), 500
 
 def output_result(output_file,line,line_number,name,results,search):
     result = [f"{line_number}", f"{name}", f"{line.strip()}"]
