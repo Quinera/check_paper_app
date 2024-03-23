@@ -1,18 +1,35 @@
 <!doctype html>
 <html lang="ja">
 <head>
-    <title>論文チェックサイトダウンロードページ</title>
+    <title>論文チェックシートダウンロードページ</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> <!-- CSSファイルをリンク -->
-    <h3>論文チェックサイト</h3>
+    <h3>論文チェックシート</h3>
+    <style>
+        th {
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body>
     <h1>チェックが完了しました</h1>
-    <p><a href="{{ download_url }}">結果をダウンロード</a></p>
+    <p><a href="{{ download_url }}">結果をテキストファイルでダウンロード</a></p>
+    <p><a href="/">もう一度アップロードする</a></p>
     <h1>チェック結果</h1>
     <ul>
-        {% for result in results %}
-            <li>{{ result }}</li>
-        {% endfor %}
+        <table style="width: 95%; table-layout: fixed;" border="1">
+            <tr>
+                <th style="width: 5%;">行数</th>
+                <th style="width: 15%;">検出された問題</th>
+                <th style="width: 80%;">文章</th>
+            </tr>
+            {% for row in results %}
+            <tr>
+                {% for item in row %}
+                <td>{{ item }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
     </ul>
     <!-- アップロードページへのリンクを追加 -->
     <p><a href="/">もう一度アップロードする</a></p>

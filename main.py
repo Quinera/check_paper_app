@@ -6,23 +6,27 @@ app = Flask(__name__)
 
 # パターンとその名称を辞書で定義
 patterns = {
-    #"1文の長さが80文字以上": r"(?:[^\x00-\x7F]|[\x80-\xFF]){80,}",
-    "カッコの全角半角不一致": r"（(?![^（]*）)|\((?![^\(]*\))",
-    "カッコと単語の間に半角スペースがない": r"[\p{Han}\p{Hiragana}\p{Katakana}a-zA-Z]\(|\)[\p{Han}\p{Hiragana}\p{Katakana}a-zA-Z]",
-    "ソースファイルで未改行": r'(。[^。]*。)',
-    "ダブルクオーテーションの誤り": r'"',
-    "pp.とページ番号の間に半角スペースがない": r"pp\.(?!\s\d+--\d+)",
-    "全角アルファベット": r"[\uFF21-\uFF3A\uFF41-\uFF5A]",
-    "半角カタカナ": r"[\uFF61-\uFF9F]+",
-    "半角カンマ": r"[^\x00-\x7F],",
-    "半角ピリオド": r"[^\x00-\x7F]\.",
-    "日本語に半角カッコ": r"\([^\x00-\x7F]|[^\x00-\x7F]\)",
-    "英語に全角カッコ": r"（[\x00-\x7F]|[\x00-\x7F]）",
+    "1文の長さが長すぎる": r".{100,}",
+    #"pp.とページ番号の間に半角スペースがない": r"pp\.(?!\s\d+--\d+)",
+    "「です」「ます」調": r"です|ます|でしょう|でした|ました|ません",
     "体言止め": r"[\u4E00-\u9FFF]。",
+    "半角カタカナ": r"[\uFF61-\uFF9F]+",
+    "全角アルファベット": r"[\uFF21-\uFF3A\uFF41-\uFF5A]",
+    "全角スペース": r"\u3000",
+    "日本語にダブルクオーテーション": r"(``[\w\s]+'')|([^\x00-\x7F][''])|([``][^\x00-\x7F])",
+    "英語にカギカッコ": r"[「][\x20-\x7E]+[」]",
+    "日本語に半角カンマ": r"[^\x00-\x7F],",
+    "日本語に半角ピリオド": r"[^\x00-\x7F]\.",
+    "カッコの全角半角不一致": r"（(?![^（]*）)|\((?![^\(]*\))",
+    "日本語に半角カッコ": r"\([^\x00-\x7F]|[^\x00-\x7F]\)",
+    "英語に全角カッコ": r"[（][\x20-\x7E]+[）]",
+    "ダブルクオーテーションの誤り": r'"',
+    "カッコとカッコの外側の単語の間に半角スペースがない": r"[\p{Han}\p{Hiragana}\p{Katakana}a-zA-Z]\(|\)[\p{Han}\p{Hiragana}\p{Katakana}a-zA-Z]",
+    "半角カンマと英単語の間に半角スペースがない": r",[a-zA-Z0-9!-/:-@[-`{-~]+",
+    "ソースファイルで未改行": r'(。[^。]*。)',
     "句点の後に参考文献": r"。\\cite|\. \\cite",
     "半角文字と参考文献の間に半角スペースがない": r"[\x21-\x7e]\\cite",
     "4桁以上の数字にカンマがない": r"\d{4,}",
-    "「です」「ます」調": r"です|ます|でしょう|でした|ました|ません",
 }
 
 # ファイルをアップロードし、処理するエンドポイント
@@ -57,11 +61,12 @@ def download_file(filename):
     path = os.path.join('output', filename)
     return send_file(path, as_attachment=True)
 
-def output_result(output_file,line,line_number,name,results):
-    result = f"Line {line_number}: '{line.strip()}' matches pattern '{name}'\n"
-    print(result, end='')  # コンソールに表示
-    output_file.write(result)  # ファイルに保存
-    output_file.write("\n")  # ファイルに保存
+def output_result(output_file,line,line_number,name,results,search):
+    result = [f"{line_number}", f"{name}", f"{line.strip()}"]
+    print_result = f"{result[0]} : {result[1]} - {result[2]}\n"
+    #print(print_result, end='')  # コンソールに表示
+    output_file.write(print_result)  # ファイルに保存
+    #output_file.write("\n")  # ファイルに保存
     results.append(result)
 
 def find_and_save_patterns(file_path, output_file_path, patterns,results):
@@ -74,20 +79,44 @@ def find_and_save_patterns(file_path, output_file_path, patterns,results):
     :param patterns: 正規表現パターンとその名称を含む辞書
     """
     bibflag = False
+    cflag = False
 
     with open(file_path, 'r', encoding='utf-8') as file, \
         open(output_file_path, 'w', encoding='utf-8') as output_file:
+        output_file.write("行数, 検出された問題, 文章\n")
+        cflag = False
         for line_number, line in enumerate(file, start=1):
+            line = line.strip()
+            if len(line) == 0: continue
             if line.startswith('%') or line.startswith('\\') or "助成" in line:
                 if line.startswith('\\bibitem'): bibflag = True
                 continue
+
+            # cflagがTrueであれば、前の行と現在の行を結合
+            if cflag:
+                line = previous_line + line
+                line_number = previous_number
+                cflag = False  # cflagをリセット
+                #print(f"{line}\n")
+
+            # 文が句点で終わらない場合に、次の行と結合するための準備
+            if not line.endswith('。') and not line.endswith('．'):
+                previous_line = line
+                previous_number = line_number
+                cflag = True
+                continue
+            else:
+                # 文が句点で終わっている場合は、cflagをFalseにして、次の行で結合しないようにする
+                if cflag: cflag = False
             for name, pattern in patterns.items():
                 if name != "半角文字と参考文献の間に半角スペースがない" and name != "句点の後に参考文献":
-                    clean_line = re.sub(r'\\cite\{[^}]*\}', '', line)
+                    clean_line = re.sub(r'\\\w+\{[^}]*\}', '', line)
+                else:
+                    clean_line = line
                 search = re.search(pattern, clean_line)
                 if search:
                     if name == "4桁以上の数字にカンマがない" and bibflag: continue
-                    output_result(output_file,line,line_number,name,results)
+                    output_result(output_file,line,line_number,name,results,search)
             if bibflag and line.endswith("."): bibflag = False
 
 def process_file(input_file_path, output_file_path,results):
