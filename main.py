@@ -40,6 +40,8 @@ def upload_file():
         file = request.files["file"]
         if file.filename == "":
             return "ファイルが選択されていません", 400
+        if not file.filename.endswith(".txt") and not file.filename.endswith(".tex"):
+            return "txtまたはtexファイルをアップロードしてください", 400
         if file:
             # アップロードされたファイルを一時ファイルとして保存
             input_file_path = os.path.join("tmp", f"input_{file.filename}")
