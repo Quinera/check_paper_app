@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # パターンとその名称を辞書で定義
 patterns = {
-    "1文の長さが長すぎる": r".{100,}",
+    #"1文の長さが長すぎる": r".{100,}",
     # "pp.とページ番号の間に半角スペースがない": r"pp\.(?!\s\d+--\d+)",
     "「です」「ます」調": r"です|ます|でしょう|でした|ました|ません",
     "体言止め": r"[\u4E00-\u9FFF]。",
@@ -75,7 +75,7 @@ def cleanup(filename):
         return str(e), 500
 
 
-def output_result(output_file, line, line_number, name, results, search):
+def output_result(output_file, line, line_number, name, results):
     result = [f"{line_number}", f"{name}", f"{line.strip()}"]
     print_result = f"{result[0]} : {result[1]} - {result[2]}\n"
     output_file.write(print_result)  # ファイルに保存
@@ -94,6 +94,7 @@ def find_and_save_patterns(file_path, output_file_path, patterns, results):
             line = line.strip()
             if len(line) == 0:
                 continue
+            if line.startswith(r"\end{document}"): break
             if line.startswith("%") or line.startswith("\\") or "助成" in line:
                 if line.startswith("\\bibitem"):
                     bibflag = True
@@ -123,9 +124,9 @@ def find_and_save_patterns(file_path, output_file_path, patterns, results):
                     clean_line = line
                 search = re.search(pattern, clean_line)
                 if search:
-                    if name == "4桁以上の数字にカンマがない" and bibflag:
+                    if name == "4桁以上の数字にカンマがない" and (bibflag or bool(re.match(r"^(19[0-9]{2}|20[0-9]{2})$", search.group()))):
                         continue
-                    output_result(output_file, line, line_number, name, results, search)
+                    output_result(output_file, line, line_number, name, results)
             if bibflag and line.endswith("."):
                 bibflag = False
 
