@@ -4,12 +4,33 @@
     <meta charset="UTF-8">
     <title>論文チェックシート</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> <!-- CSSファイルをリンク -->
+    <script>
+        function validateFile() {
+            var fileInput = document.getElementById('file');
+            var filePath = fileInput.value;
+            var allowedExtensions = /(\.txt|\.tex)$/i;
+            // ファイルが選択されているかチェック
+            if(fileInput.files.length === 0) {
+                alert('ファイルが選択されていません。');
+                return false;
+            }
+            // ファイルの拡張子が.txtまたは.texかチェック
+            if(!allowedExtensions.exec(filePath)) {
+                alert('拡張子が.txtまたは.texのファイルをアップロードしてください。');
+                fileInput.value = ''; // ファイル選択をリセット
+                return false;
+            } else {
+                // 拡張子が正しい場合は、フォームを送信
+                return true;
+            }
+        }
+    </script>
     <h3>論文チェックシート</h3>
 </head>
 <body>
     <h1>チェックするファイルをアップロードしてください</h1>
-    <form method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
+    <form id="uploadForm" method="post" enctype="multipart/form-data" onsubmit="return validateFile();">
+        <input type="file" name="file" id="file">
         <input type="submit" value="アップロード">
     </form>
     <h1>チェック項目</h1>

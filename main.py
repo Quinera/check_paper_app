@@ -30,18 +30,12 @@ patterns = {
 }
 
 
-# ファイルをアップロードし、処理するエンドポイント
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
+    error_message = None  # エラーメッセージ用の変数を初期化
+
     if request.method == "POST":
-        # ファイルがリクエストに含まれているか確認
-        if "file" not in request.files:
-            return "ファイルがありません", 400
         file = request.files["file"]
-        if file.filename == "":
-            return "ファイルが選択されていません", 400
-        if not file.filename.endswith(".txt") and not file.filename.endswith(".tex"):
-            return "txtまたはtexファイルをアップロードしてください", 400
         if file:
             # アップロードされたファイルを一時ファイルとして保存
             input_file_path = os.path.join("tmp", f"input_{file.filename}")
@@ -62,9 +56,8 @@ def upload_file():
                 results=results,
             )
 
-    # GETリクエストの場合、ファイルアップロードフォームを表示（変更点）
+    # GETリクエストの場合、またはエラー発生時
     return render_template("index.html")
-
 
 @app.route("/download/<filename>")
 def download_file(filename):
