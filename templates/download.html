@@ -30,13 +30,21 @@
           <th style="width: 15%">検出された問題</th>
           <th style="width: 80%">文章</th>
         </tr>
-        {% for row in results %}
-        <tr>
-          {% for item in row %}
-          <td>{{ item }}</td>
+        {% if results %}
+          {% for row in results %}
+          <tr>
+            {% for item in row %}
+            <td>{{ item }}</td>
+            {% endfor %}
+          </tr>
           {% endfor %}
-        </tr>
-        {% endfor %}
+        {% else %}
+          <tr>
+            <td></td>
+            <td></td>
+            <td>検出された問題はありません。</td>
+          </tr>
+        {% endif %}
       </table>
     </ul>
     <!-- アップロードページへのリンクを追加 -->

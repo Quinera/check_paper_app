@@ -32,8 +32,6 @@ patterns = {
 
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
-    error_message = None  # エラーメッセージ用の変数を初期化
-
     if request.method == "POST":
         file = request.files["file"]
         if file:
@@ -98,6 +96,7 @@ def find_and_save_patterns(file_path, output_file_path, patterns, results):
             if line.startswith("%") or line.startswith("\\") or "助成" in line:
                 if line.startswith("\\bibitem"):
                     bibflag = True
+                cflag = False
                 continue
             # cflagがTrueであれば、前の行と現在の行を結合
             if cflag:
@@ -120,6 +119,7 @@ def find_and_save_patterns(file_path, output_file_path, patterns, results):
                     and name != "句点の後に参考文献"
                 ):
                     clean_line = re.sub(r"\\\w+\{[^}]*\}", "", line)
+                    clean_line = re.sub(r"\$[^$]*\$", "", clean_line)
                 else:
                     clean_line = line
                 search = re.search(pattern, clean_line)
